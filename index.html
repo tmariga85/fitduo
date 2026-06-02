@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f1115" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Fit Duo — Tawanda & Nathan</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2a2f3a;
+    --txt:#e8ecf2; --mut:#9aa3b2; --accent:#4ade80; --accent2:#38bdf8;
+    --warn:#fbbf24; --bad:#f87171; --good:#4ade80;
+    --r:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.4}
+  body{padding-bottom:84px}
+  a{color:var(--accent2)}
+  .wrap{max-width:560px;margin:0 auto;padding:14px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:14px 14px 6px;max-width:560px;margin:0 auto}
+  .brand{font-weight:800;font-size:20px;letter-spacing:.3px}
+  .brand span{color:var(--accent)}
+  .who{font-size:13px;color:var(--mut);text-align:right}
+  .who b{color:var(--txt)}
+  .banner{background:#3a2d12;border:1px solid #5a4416;color:#fcd34d;
+    padding:10px 12px;border-radius:12px;font-size:13px;margin:0 14px 6px;max-width:560px}
+  .banner.ok{background:#10271a;border-color:#1f5135;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px;margin:12px 0}
+  .card h2{margin:0 0 12px;font-size:16px;display:flex;align-items:center;gap:8px}
+  .card h2 .pill{margin-left:auto;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;
+    background:var(--card2);color:var(--mut)}
+  .row{display:flex;align-items:center;gap:10px}
+  .between{justify-content:space-between}
+  .mut{color:var(--mut)}
+  .small{font-size:13px}
+  .tiny{font-size:11px}
+  label.field{display:block;margin:10px 0}
+  label.field .lab{font-size:13px;color:var(--mut);margin-bottom:5px;display:block}
+  input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);
+    color:var(--txt);border-radius:12px;padding:11px 12px;font-size:16px;font-family:inherit}
+  textarea{min-height:70px;resize:vertical}
+  input[type=checkbox]{width:auto}
+  button{cursor:pointer;font-family:inherit}
+  .btn{background:var(--accent);color:#06210f;border:none;border-radius:12px;
+    padding:12px 16px;font-weight:700;font-size:15px}
+  .btn.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+  .btn.ghost{background:transparent;color:var(--accent2);border:none;padding:8px}
+  .btn.sm{padding:8px 12px;font-size:13px}
+  .btn.block{width:100%}
+  .btn:active{transform:translateY(1px)}
+
+  /* check items */
+  .check{display:flex;align-items:center;gap:12px;background:var(--card2);
+    border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;cursor:pointer;
+    transition:.12s}
+  .check.on{border-color:var(--accent);background:#13241a}
+  .box{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;font-weight:900;color:transparent}
+  .check.on .box{background:var(--accent);border-color:var(--accent);color:#06210f}
+  .check .t{font-weight:600}
+  .check .s{font-size:12px;color:var(--mut)}
+  .check .right{margin-left:auto;text-align:right;color:var(--mut);font-size:12px}
+
+  /* water */
+  .water .drops{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .drop{flex:1;min-width:54px;text-align:center;padding:10px 0;border-radius:10px;
+    border:1px solid var(--line);background:var(--card2);font-size:13px;cursor:pointer}
+  .drop.on{background:#0c2533;border-color:var(--accent2);color:var(--accent2)}
+  .progress{height:10px;background:var(--card2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+  .progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:0}
+
+  /* workouts */
+  .wk{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+  .wk .top{display:flex;align-items:center;gap:8px}
+  .tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#13241a;color:var(--accent)}
+  .tag.run{background:#0c2533;color:var(--accent2)}
+  .tag.hiit{background:#2a1726;color:#f0abfc}
+  .tag.res{background:#2a230f;color:var(--warn)}
+  .tag.other{background:#222630;color:var(--mut)}
+  .tag.q{background:var(--accent);color:#06210f}
+  .add-wk{display:grid;grid-template-columns:1.2fr .8fr auto;gap:8px;align-items:end}
+  .del{background:none;border:none;color:var(--bad);font-size:18px;padding:4px 6px}
+
+  /* stats grid */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .stat .n{font-size:22px;font-weight:800}
+  .stat .l{font-size:12px;color:var(--mut)}
+
+  /* week goal bars */
+  .goal{margin:12px 0}
+  .goal .gt{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .goal .gt b{font-weight:700}
+  .bar{height:14px;border-radius:999px;background:var(--card2);border:1px solid var(--line);overflow:hidden}
+  .bar>i{display:block;height:100%;width:0;border-radius:999px}
+  .bar.met>i{background:var(--good)} .bar.part>i{background:var(--accent2)} .bar.low>i{background:var(--warn)}
+
+  /* compare */
+  .cmp{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--line)}
+  .cmp .me{text-align:right} .cmp .nm{text-align:left}
+  .cmp .lbl{text-align:center;font-size:11px;color:var(--mut)}
+  .cmp .v{font-weight:800;font-size:18px}
+  .lead{color:var(--accent)} .behind{color:var(--mut)}
+
+  /* week strip */
+  .strip{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px}
+  .day{flex:0 0 auto;width:46px;text-align:center;padding:8px 0;border-radius:10px;
+    border:1px solid var(--line);background:var(--card2);font-size:12px;cursor:pointer}
+  .day.sel{border-color:var(--accent);background:#13241a}
+  .day .d{font-size:11px;color:var(--mut)} .day.sel .d{color:var(--accent)}
+  .day .num{font-weight:800;font-size:16px} .day .min{font-size:10px;color:var(--mut)}
+
+  /* nav */
+  nav{position:fixed;bottom:0;left:0;right:0;background:#12151c;border-top:1px solid var(--line);
+    display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:30}
+  nav button{background:none;border:none;color:var(--mut);font-size:11px;display:flex;
+    flex-direction:column;align-items:center;gap:3px;padding:4px 10px;flex:1}
+  nav button .ic{font-size:20px}
+  nav button.on{color:var(--accent)}
+  .hide{display:none!important}
+  .center{text-align:center}
+  hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+  code{background:var(--card2);padding:2px 6px;border-radius:6px;font-size:13px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;
+    justify-content:center;z-index:50}
+  .modal .sheet{background:var(--card);border:1px solid var(--line);border-radius:18px 18px 0 0;
+    width:100%;max-width:560px;padding:18px;max-height:88vh;overflow:auto}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:#fff;color:#111;
+    padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboard" class="wrap hide">
+  <div class="card">
+    <h2>👋 Welcome to Fit Duo</h2>
+    <p class="mut small">A shared tracker for you and your training partner. Pick your name, set a shared
+    group code (both of you type the <b>same</b> code to link up), and you're in.</p>
+    <label class="field"><span class="lab">Your name</span>
+      <input id="ob-name" placeholder="Tawanda" /></label>
+    <label class="field"><span class="lab">Partner's name</span>
+      <input id="ob-partner" placeholder="Nathan" /></label>
+    <label class="field"><span class="lab">Shared group code (any word — share it with your partner)</span>
+      <input id="ob-group" placeholder="e.g. ironduo2026" /></label>
+    <label class="field"><span class="lab">Program start date (used for the month-2 diet rule)</span>
+      <input id="ob-start" type="date" /></label>
+    <button class="btn block" id="ob-go">Start tracking →</button>
+    <p class="tiny mut center" style="margin-top:10px">Starts in offline local mode. Add free cloud sync
+    anytime under <b>Settings</b> to share live with your partner.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hide">
+  <header>
+    <div class="brand">Fit<span>Duo</span></div>
+    <div class="who" id="who"></div>
+  </header>
+  <div id="syncBanner" class="banner">⚠️ Local mode — data stays on this device. Add cloud sync in Settings to share with your partner.</div>
+
+  <main class="wrap">
+    <!-- TODAY -->
+    <section id="v-today">
+      <div class="strip" id="weekStrip"></div>
+
+      <div class="card water">
+        <h2>💧 Water <span class="pill" id="waterPill">0 / 2.0 L</span></h2>
+        <div class="progress"><i id="waterBar"></i></div>
+        <div class="drops" id="waterDrops"></div>
+        <div class="row between small mut">
+          <span>Goal: at least 2 L every day</span>
+          <button class="btn ghost sm" id="waterCustom">Set exact ml</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🏋️ Workouts <span class="pill" id="wkPill">0 today</span></h2>
+        <div id="wkList"></div>
+        <div class="add-wk">
+          <label class="field" style="margin:0"><span class="lab">Type</span>
+            <select id="wkType">
+              <option value="HIIT">HIIT / High intensity</option>
+              <option value="Running">Running</option>
+              <option value="Resistance">Resistance / Strength</option>
+              <option value="Other">Other</option>
+            </select></label>
+          <label class="field" style="margin:0"><span class="lab">Minutes</span>
+            <input id="wkMin" type="number" inputmode="numeric" placeholder="40" /></label>
+          <button class="btn sm" id="wkAdd" style="height:46px">Add</button>
+        </div>
+        <p class="tiny mut" style="margin:8px 0 0">A session counts toward your 5×/week goal if it's
+          HIIT, Running or Resistance and ≥ 40 min. <span class="tag q">✓</span> marks qualifying sessions.</p>
+      </div>
+
+      <div class="card">
+        <h2>🍽️ Eating</h2>
+        <div class="check" id="omadCheck">
+          <div class="box">✓</div>
+          <div><div class="t">One Meal A Day (OMAD)</div><div class="s" id="omadSub">Goal: 3 days / week</div></div>
+        </div>
+        <div class="check hide" id="omadQ">
+          <div class="box">✓</div>
+          <div><div class="t">Meal was meat + veggies + healthy fat</div><div class="s">Month 2 quality target</div></div>
+        </div>
+        <div class="check" id="fastCheck">
+          <div class="box">✓</div>
+          <div><div class="t">Water fast (full day)</div><div class="s">Goal: 2 days / week</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⌚ Watch stats <span class="pill">manual</span></h2>
+        <div class="grid">
+          <label class="field" style="margin:0"><span class="lab">Steps</span>
+            <input id="stSteps" type="number" inputmode="numeric" placeholder="0"/></label>
+          <label class="field" style="margin:0"><span class="lab">Active calories</span>
+            <input id="stCal" type="number" inputmode="numeric" placeholder="0"/></label>
+          <label class="field" style="margin:0"><span class="lab">Avg heart rate</span>
+            <input id="stHr" type="number" inputmode="numeric" placeholder="bpm"/></label>
+          <label class="field" style="margin:0"><span class="lab">Sleep (hrs)</span>
+            <input id="stSleep" type="number" inputmode="decimal" placeholder="e.g. 7.5"/></label>
+        </div>
+        <p class="tiny mut" style="margin:8px 0 0">Or bulk-import from Samsung Health under the <b>Watch</b> tab.</p>
+      </div>
+
+      <div class="card">
+        <h2>📝 Notes</h2>
+        <textarea id="notes" placeholder="How did today feel? Energy, soreness, wins…"></textarea>
+      </div>
+    </section>
+
+    <!-- WEEK -->
+    <section id="v-week" class="hide">
+      <div class="card">
+        <h2>📊 This week <span class="pill" id="weekRange"></span></h2>
+        <div class="grid">
+          <div class="stat"><div class="n" id="wsWorkouts">0</div><div class="l">workouts logged</div></div>
+          <div class="stat"><div class="n" id="wsQual">0</div><div class="l">qualifying (≥40m)</div></div>
+          <div class="stat"><div class="n" id="wsMin">0</div><div class="l">total minutes</div></div>
+          <div class="stat"><div class="n" id="wsSteps">0</div><div class="l">total steps</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🎯 Weekly goals</h2>
+        <div class="goal" id="g-workouts"></div>
+        <div class="goal" id="g-omad"></div>
+        <div class="goal" id="g-fast"></div>
+        <div class="goal" id="g-water"></div>
+      </div>
+
+      <div class="card">
+        <h2>🏋️ By workout type</h2>
+        <div id="byType"></div>
+      </div>
+
+      <div class="card">
+        <h2>📅 Minutes per day</h2>
+        <div id="perDay"></div>
+      </div>
+    </section>
+
+    <!-- COMPARE -->
+    <section id="v-compare" class="hide">
+      <div class="card">
+        <h2>🤝 Compare — this week</h2>
+        <div class="row between small" style="margin-bottom:6px">
+          <span class="me" style="flex:1;text-align:right;font-weight:800" id="cmpMeName">You</span>
+          <span class="lbl" style="padding:0 8px">vs</span>
+          <span class="nm" style="flex:1;font-weight:800" id="cmpThemName">Partner</span>
+        </div>
+        <div id="cmpRows"></div>
+        <div id="cmpVerdict" class="center" style="margin-top:14px;font-weight:700"></div>
+      </div>
+      <div class="card">
+        <h2>📜 Partner's latest notes</h2>
+        <div id="partnerNotes" class="small mut">No notes yet.</div>
+      </div>
+    </section>
+
+    <!-- WATCH / IMPORT -->
+    <section id="v-watch" class="hide">
+      <div class="card">
+        <h2>⌚ Samsung Health import</h2>
+        <p class="small mut">In the Samsung Health app: <b>Settings → Download personal data</b>. You'll get a
+        ZIP — unzip it and pick the CSV files below. Steps and exercise sessions will be merged into your days.</p>
+        <label class="field"><span class="lab">Choose Samsung Health CSV file(s)</span>
+          <input id="csvFile" type="file" accept=".csv" multiple /></label>
+        <div id="importLog" class="small mut"></div>
+        <p class="tiny mut">Recognised: <code>step_daily_trend</code> (steps/calories) and
+          <code>exercise</code> (workout sessions). Other files are skipped safely.</p>
+      </div>
+      <div class="card">
+        <h2>📈 Recent watch data</h2>
+        <div id="watchTable" class="small"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="v-settings" class="hide">
+      <div class="card">
+        <h2>☁️ Cloud sync (Firebase)</h2>
+        <p class="small mut">Paste your Firebase web config below to sync live with your partner. Both of you
+        use the same config + same group code. <button class="btn ghost sm" id="howto">How do I get this?</button></p>
+        <label class="field"><span class="lab">Firebase config (the <code>{ ... }</code> object)</span>
+          <textarea id="fbCfg" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", ... }'></textarea></label>
+        <button class="btn block" id="fbSave">Save & connect</button>
+        <div id="fbStatus" class="small" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h2>👤 Profile</h2>
+        <label class="field"><span class="lab">Your name</span><input id="setName"/></label>
+        <label class="field"><span class="lab">Partner's name</span><input id="setPartner"/></label>
+        <label class="field"><span class="lab">Group code</span><input id="setGroup"/></label>
+        <label class="field"><span class="lab">Program start date</span><input id="setStart" type="date"/></label>
+        <button class="btn block sec" id="setSave">Save profile</button>
+      </div>
+      <div class="card">
+        <h2>🛠️ Data</h2>
+        <button class="btn block sec" id="exportData">Export my data (backup file)</button>
+        <hr/>
+        <button class="btn block sec" id="importData">Import a backup file</button>
+        <input id="importFile" type="file" accept=".json" class="hide"/>
+        <hr/>
+        <button class="btn block sec" style="color:var(--bad)" id="resetAll">Reset everything on this device</button>
+      </div>
+      <p class="tiny mut center" style="margin-bottom:30px">FitDuo · single-file app · your data lives in your own Firebase project</p>
+    </section>
+  </main>
+
+  <nav>
+    <button data-v="today" class="on"><span class="ic">📅</span>Today</button>
+    <button data-v="week"><span class="ic">📊</span>Week</button>
+    <button data-v="compare"><span class="ic">🤝</span>Compare</button>
+    <button data-v="watch"><span class="ic">⌚</span>Watch</button>
+    <button data-v="settings"><span class="ic">⚙️</span>Settings</button>
+  </nav>
+</div>
+
+<script type="module">
+/* ============================ FitDuo ============================ */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const QUAL_TYPES = ['HIIT','Running','Resistance'];
+const QUAL_MIN = 40;
+const GOALS = { workouts:5, omad:3, fast:2, waterDays:7, water_ml:2000 };
+
+/* ---- date helpers (local, no UTC drift) ---- */
+const pad=n=>String(n).padStart(2,'0');
+function ymd(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function parseYmd(s){ const [y,m,dd]=s.split('-').map(Number); return new Date(y,m-1,dd); }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function mondayOf(d){ const x=new Date(d); const wd=(x.getDay()+6)%7; return addDays(x,-wd); }
+const DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtShort(d){ return `${MON[d.getMonth()]} ${d.getDate()}`; }
+
+/* ---- profile / settings ---- */
+const LS='fitduo';
+function loadProfile(){ try{return JSON.parse(localStorage.getItem(LS+':profile'))||null}catch{return null} }
+function saveProfile(p){ localStorage.setItem(LS+':profile', JSON.stringify(p)); }
+let profile = loadProfile();
+let selectedDate = ymd(new Date());
+
+/* ============================ DATA STORE ============================ */
+/* Abstraction over local (offline) and Firebase (cloud). cache[user][date] = dayData */
+const Store = {
+  mode:'local', group:null, user:null, partner:null,
+  cache:{}, listeners:[], db:null, ready:false,
+
+  onChange(cb){ this.listeners.push(cb); },
+  emit(){ this.listeners.forEach(cb=>cb()); },
+
+  key(user,date){ return `${LS}:day:${this.group}:${user}:${date}`; },
+
+  getDay(user,date){
+    if(this.cache[user] && this.cache[user][date]) return this.cache[user][date];
+    if(this.mode==='local' && user===this.user){
+      try{ const v=JSON.parse(localStorage.getItem(this.key(user,date))); if(v){ (this.cache[user]=this.cache[user]||{})[date]=v; return v; } }catch{}
+    }
+    return blankDay();
+  },
+
+  async saveDay(date,data){
+    data.updated = Date.now();
+    (this.cache[this.user]=this.cache[this.user]||{})[date]=data;
+    if(this.mode==='cloud' && this.db){
+      const {doc,setDoc} = this.fs;
+      await setDoc(doc(this.db,'groups',this.group,'members',this.user,'days',date), data);
+    } else {
+      localStorage.setItem(this.key(this.user,date), JSON.stringify(data));
+    }
+    this.emit();
+  },
+
+  /* load all local days for current user into cache (for week/compare views) */
+  loadLocalCache(){
+    this.cache[this.user]=this.cache[this.user]||{};
+    const pre=`${LS}:day:${this.group}:${this.user}:`;
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k && k.startsWith(pre)){ const date=k.slice(pre.length);
+        try{ this.cache[this.user][date]=JSON.parse(localStorage.getItem(k)); }catch{} }
+    }
+  },
+
+  async initLocal(){ this.mode='local'; this.loadLocalCache(); this.ready=true; this.emit(); },
+
+  async initCloud(cfg){
+    const appMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const authMod= await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    const fsMod  = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const app = appMod.initializeApp(cfg);
+    const auth = authMod.getAuth(app);
+    await authMod.signInAnonymously(auth);
+    await new Promise(res=>authMod.onAuthStateChanged(auth,u=>{ if(u) res(); }));
+    this.db = fsMod.getFirestore(app);
+    this.fs = fsMod;
+    this.mode='cloud';
+    // keep any local data available immediately, then live-listen to both members
+    this.loadLocalCache();
+    [this.user,this.partner].forEach(member=>{
+      if(!member) return;
+      this.cache[member]=this.cache[member]||{};
+      const col = fsMod.collection(this.db,'groups',this.group,'members',member,'days');
+      fsMod.onSnapshot(col, snap=>{
+        snap.forEach(docu=>{ this.cache[member][docu.id]=docu.data(); });
+        this.emit();
+      }, err=>{ console.warn('snapshot error',err); });
+    });
+    this.ready=true; this.emit();
+  }
+};
+
+function blankDay(){
+  return { water:0, workouts:[], omad:false, omadQuality:false, fast:false,
+           steps:0, activeCal:0, hr:0, sleep:0, notes:'' };
+}
+/* current editable copy for selectedDate */
+function curDay(){ return Store.getDay(Store.user, selectedDate); }
+
+/* ============================ MONTH / DIET RULE ============================ */
+function monthIndex(){ // 0-based months since program start
+  if(!profile?.start) return 0;
+  const s=parseYmd(profile.start), d=parseYmd(selectedDate);
+  return (d.getFullYear()-s.getFullYear())*12 + (d.getMonth()-s.getMonth());
+}
+
+/* ============================ RENDER: TODAY ============================ */
+function renderWeekStrip(){
+  const mon=mondayOf(parseYmd(selectedDate));
+  const el=$('#weekStrip'); el.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=addDays(mon,i), ds=ymd(d), day=Store.getDay(Store.user,ds);
+    const mins=(day.workouts||[]).reduce((a,w)=>a+(+w.minutes||0),0);
+    const sel=ds===selectedDate;
+    const div=document.createElement('div');
+    div.className='day'+(sel?' sel':'');
+    div.innerHTML=`<div class="d">${DOW[i]}</div><div class="num">${d.getDate()}</div><div class="min">${mins?mins+'m':'·'}</div>`;
+    div.onclick=()=>{ selectedDate=ds; renderAll(); };
+    el.appendChild(div);
+  }
+}
+
+function renderWater(){
+  const day=curDay(); const ml=day.water||0;
+  $('#waterPill').textContent=`${(ml/1000).toFixed(1)} / 2.0 L`;
+  $('#waterBar').style.width=Math.min(100, ml/GOALS.water_ml*100)+'%';
+  const drops=$('#waterDrops'); drops.innerHTML='';
+  // 8 cups of 250ml = 2L
+  for(let i=1;i<=8;i++){
+    const lvl=i*250; const on=ml>=lvl;
+    const b=document.createElement('div'); b.className='drop'+(on?' on':'');
+    b.textContent=`${(lvl/1000).toFixed(2)}L`;
+    b.onclick=async()=>{ day.water = (ml>=lvl && ml===lvl)?lvl-250:lvl; await Store.saveDay(selectedDate,day); };
+    drops.appendChild(b);
+  }
+}
+
+function wkTagClass(t){ return t==='Running'?'run':t==='HIIT'?'hiit':t==='Resistance'?'res':'other'; }
+function isQual(w){ return QUAL_TYPES.includes(w.type) && (+w.minutes||0)>=QUAL_MIN; }
+
+function renderWorkouts(){
+  const day=curDay(); const list=$('#wkList'); list.innerHTML='';
+  (day.workouts||[]).forEach((w,idx)=>{
+    const div=document.createElement('div'); div.className='wk';
+    div.innerHTML=`<div class="top">
+        <span class="tag ${wkTagClass(w.type)}">${w.type}</span>
+        <b>${w.minutes||0} min</b>
+        ${isQual(w)?'<span class="tag q">✓ counts</span>':''}
+        ${w.source?'<span class="tag other">⌚</span>':''}
+        <button class="del" title="remove">✕</button></div>`;
+    div.querySelector('.del').onclick=async()=>{ day.workouts.splice(idx,1); await Store.saveDay(selectedDate,day); };
+    list.appendChild(div);
+  });
+  const n=(day.workouts||[]).length;
+  $('#wkPill').textContent = n? `${n} today` : 'none yet';
+}
+
+function renderEating(){
+  const day=curDay();
+  $('#omadCheck').classList.toggle('on', !!day.omad);
+  $('#fastCheck').classList.toggle('on', !!day.fast);
+  const m2 = monthIndex()>=1;
+  $('#omadSub').textContent = m2 ? 'Goal: 3 days/week · Month 2: meat + veggies + healthy fat'
+                                 : 'Goal: 3 days/week · any meal (Month 1)';
+  $('#omadQ').classList.toggle('hide', !(m2 && day.omad));
+  $('#omadQ').classList.toggle('on', !!day.omadQuality);
+}
+
+function renderStats(){
+  const day=curDay();
+  $('#stSteps').value=day.steps||''; $('#stCal').value=day.activeCal||'';
+  $('#stHr').value=day.hr||''; $('#stSleep').value=day.sleep||'';
+  $('#notes').value=day.notes||'';
+}
+
+/* ============================ RENDER: WEEK ============================ */
+function weekDates(date){ const mon=mondayOf(parseYmd(date)); return [...Array(7)].map((_,i)=>ymd(addDays(mon,i))); }
+
+function weekAgg(user,date){
+  const dates=weekDates(date);
+  let workouts=0,qual=0,mins=0,steps=0,omad=0,fast=0,waterDays=0;
+  const byType={}; const perDay=[];
+  dates.forEach(ds=>{
+    const d=Store.getDay(user,ds);
+    const dm=(d.workouts||[]).reduce((a,w)=>a+(+w.minutes||0),0);
+    perDay.push(dm);
+    (d.workouts||[]).forEach(w=>{ workouts++; mins+=(+w.minutes||0); if(isQual(w))qual++;
+      byType[w.type]=(byType[w.type]||0)+1; });
+    steps+=(+d.steps||0);
+    if(d.omad)omad++; if(d.fast)fast++; if((d.water||0)>=GOALS.water_ml)waterDays++;
+  });
+  return {dates,workouts,qual,mins,steps,omad,fast,waterDays,byType,perDay};
+}
+
+function goalBar(elId,label,have,want,unit){
+  const pct=Math.min(100, want? have/want*100 : 0);
+  const cls = have>=want?'met':(pct>=50?'part':'low');
+  $(elId).innerHTML=`<div class="gt"><span>${label}</span><b>${have} / ${want} ${unit||''}</b></div>
+    <div class="bar ${cls}"><i style="width:${pct}%"></i></div>`;
+}
+
+function renderWeek(){
+  const a=weekAgg(Store.user,selectedDate);
+  const mon=mondayOf(parseYmd(selectedDate));
+  $('#weekRange').textContent=`${fmtShort(mon)} – ${fmtShort(addDays(mon,6))}`;
+  $('#wsWorkouts').textContent=a.workouts; $('#wsQual').textContent=a.qual;
+  $('#wsMin').textContent=a.mins; $('#wsSteps').textContent=a.steps.toLocaleString();
+  goalBar('#g-workouts','🏋️ Qualifying workouts (≥40m)',a.qual,GOALS.workouts,'days');
+  goalBar('#g-omad','🍽️ OMAD days',a.omad,GOALS.omad,'days');
+  goalBar('#g-fast','🚱 Water-fast days',a.fast,GOALS.fast,'days');
+  goalBar('#g-water','💧 Days hit 2L',a.waterDays,GOALS.waterDays,'days');
+  const bt=$('#byType'); const keys=Object.keys(a.byType);
+  bt.innerHTML = keys.length? keys.map(k=>`<div class="row between" style="padding:6px 0">
+      <span class="tag ${wkTagClass(k)}">${k}</span><b>${a.byType[k]} session${a.byType[k]>1?'s':''}</b></div>`).join('')
+      : '<span class="mut small">No workouts this week yet.</span>';
+  const pd=$('#perDay'); const max=Math.max(60,...a.perDay);
+  pd.innerHTML=a.perDay.map((m,i)=>`<div class="row" style="gap:10px;margin:6px 0">
+      <span class="mut tiny" style="width:30px">${DOW[i]}</span>
+      <div class="bar ${m>=QUAL_MIN?'met':(m>0?'part':'low')}" style="flex:1"><i style="width:${m/max*100}%"></i></div>
+      <span class="tiny" style="width:42px;text-align:right">${m?m+'m':'·'}</span></div>`).join('');
+}
+
+/* ============================ RENDER: COMPARE ============================ */
+function renderCompare(){
+  const me=weekAgg(Store.user,selectedDate);
+  const them=weekAgg(Store.partner,selectedDate);
+  $('#cmpMeName').textContent=Store.user;
+  $('#cmpThemName').textContent=Store.partner||'Partner';
+  const rows=[
+    ['Qualifying workouts','qual'],['Total minutes','mins'],
+    ['OMAD days','omad'],['Water-fast days','fast'],
+    ['Days hit 2L','waterDays'],['Total steps','steps']
+  ];
+  $('#cmpRows').innerHTML=rows.map(([lbl,k])=>{
+    const mv=me[k], tv=them[k];
+    const meLead=mv>tv, themLead=tv>mv;
+    const fmt=v=>k==='steps'?v.toLocaleString():v;
+    return `<div class="cmp">
+      <div class="me v ${meLead?'lead':'behind'}">${fmt(mv)}</div>
+      <div class="lbl">${lbl}</div>
+      <div class="nm v ${themLead?'lead':'behind'}">${fmt(tv)}</div></div>`;
+  }).join('');
+  // verdict by qualifying workouts then minutes
+  let score=0;
+  ['qual','mins','omad','fast','waterDays','steps'].forEach(k=>{ if(me[k]>them[k])score++; else if(them[k]>me[k])score--; });
+  const v=$('#cmpVerdict');
+  if(score>0) v.innerHTML=`🔥 <span class="lead">${Store.user}</span> is ahead this week!`;
+  else if(score<0) v.innerHTML=`💪 <span class="lead">${Store.partner}</span> is ahead this week!`;
+  else v.textContent='🤝 Dead even — push harder!';
+  // partner notes for selected day
+  const pd=Store.getDay(Store.partner,selectedDate);
+  $('#partnerNotes').textContent = pd.notes ? `“${pd.notes}” — ${Store.partner}, ${fmtShort(parseYmd(selectedDate))}` : 'No notes yet.';
+}
+
+/* ============================ RENDER: WATCH ============================ */
+function renderWatch(){
+  const dates=[...Array(10)].map((_,i)=>ymd(addDays(parseYmd(selectedDate),-i)));
+  const rows=dates.map(ds=>{ const d=Store.getDay(Store.user,ds);
+    if(!(d.steps||d.activeCal||d.hr||d.sleep)) return '';
+    return `<div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line)">
+      <span class="mut">${fmtShort(parseYmd(ds))}</span>
+      <span>${(d.steps||0).toLocaleString()} 👣</span>
+      <span>${d.activeCal||0} 🔥</span>
+      <span>${d.hr||0} ❤️</span>
+      <span>${d.sleep||0}h 😴</span></div>`;
+  }).filter(Boolean).join('');
+  $('#watchTable').innerHTML=rows||'<span class="mut">No watch data yet. Enter it on Today, or import below.</span>';
+}
+
+/* ============================ MASTER RENDER ============================ */
+function renderAll(){
+  if(!profile) return;
+  $('#who').innerHTML=`<b>${Store.user}</b><br>group: ${Store.group}`;
+  renderWeekStrip(); renderWater(); renderWorkouts(); renderEating(); renderStats();
+  renderWeek(); renderCompare(); renderWatch();
+}
+
+/* ============================ SAMSUNG CSV IMPORT ============================ */
+const EX_TYPES={ 1001:'Running',1002:'Running',11007:'Other',13001:'Other',
+  14001:'Other',15006:'Resistance',15003:'Resistance',9001:'HIIT' };
+// many Samsung codes exist; default to "Other". Resistance/HIIT are best-effort.
+function exType(code){ return EX_TYPES[+code]||'Other'; }
+
+function parseSamsungCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim().length);
+  if(!lines.length) return {kind:'unknown'};
+  // Samsung exports prepend a metadata line; the real header row is the first line
+  // that contains recognisable column markers. Scan the first few lines for it.
+  const MARKERS=['start_time','day_time','exercise_type','duration','count','calorie'];
+  let headerLine=0;
+  for(let i=0;i<Math.min(4,lines.length);i++){
+    const low=lines[i].toLowerCase();
+    if(MARKERS.some(m=>low.includes(m))){ headerLine=i; break; }
+  }
+  // detect kind from the header row
+  const hdr=lines[headerLine].toLowerCase();
+  let kind='unknown';
+  if(hdr.includes('day_time') && hdr.includes('count')) kind='steps';
+  else if(hdr.includes('exercise_type') || (hdr.includes('start_time')&&hdr.includes('duration'))) kind='exercise';
+  const headers=lines[headerLine].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  const idx=name=>headers.findIndex(h=>h.toLowerCase().includes(name));
+  const rows=lines.slice(headerLine+1).map(l=>l.split(','));
+  return {kind,headers,rows,idx};
+}
+
+async function importCSVText(text,fname){
+  const p=parseSamsungCSV(text);
+  let added=0;
+  const log=msg=>{ const d=document.createElement('div'); d.textContent=msg; $('#importLog').appendChild(d); };
+  if(p.kind==='steps'){
+    const iT=p.idx('day_time'), iC=p.idx('count')>=0?p.idx('count'):p.idx('step'), iCal=p.idx('calorie');
+    for(const r of p.rows){
+      const t=+r[iT]; if(!t) continue;
+      const ds=ymd(new Date(t>1e12?t:t*1000));
+      const day=Store.getDay(Store.user,ds);
+      day.steps=Math.max(day.steps||0, parseInt(r[iC]||0)||0);
+      if(iCal>=0) day.activeCal=Math.max(day.activeCal||0, Math.round(+r[iCal]||0));
+      await Store.saveDay(ds,day); added++;
+    }
+    log(`✅ ${fname}: imported steps for ${added} day(s).`);
+  } else if(p.kind==='exercise'){
+    const iStart=p.idx('start_time'), iDur=p.idx('duration'), iType=p.idx('exercise_type'), iCal=p.idx('calorie');
+    for(const r of p.rows){
+      const t = iStart>=0 ? r[iStart] : null; if(!t) continue;
+      const tm = /^\d+$/.test(t.trim()) ? +t.trim() : Date.parse(t);
+      if(!tm) continue;
+      const ds=ymd(new Date(tm>1e12?tm:tm*1000));
+      const durMs=+r[iDur]||0; const mins=Math.round(durMs/60000)||0;
+      if(!mins) continue;
+      const day=Store.getDay(Store.user,ds);
+      day.workouts=day.workouts||[];
+      // avoid duplicate import of same start
+      if(day.workouts.some(w=>w.src===tm)) continue;
+      day.workouts.push({type:exType(iType>=0?r[iType]:0),minutes:mins,
+        cal:iCal>=0?Math.round(+r[iCal]||0):0, source:'samsung', src:tm});
+      await Store.saveDay(ds,day); added++;
+    }
+    log(`✅ ${fname}: imported ${added} workout session(s). Tip: open each day to fix the type if needed.`);
+  } else {
+    log(`⏭️ ${fname}: not a recognised steps/exercise file — skipped.`);
+  }
+}
+
+$('#csvFile').addEventListener('change', async e=>{
+  $('#importLog').innerHTML='';
+  for(const f of e.target.files){
+    try{ const txt=await f.text(); await importCSVText(txt,f.name); }
+    catch(err){ const d=document.createElement('div'); d.style.color='var(--bad)'; d.textContent=`❌ ${f.name}: ${err.message}`; $('#importLog').appendChild(d); }
+  }
+  renderAll(); toast('Import complete');
+});
+
+/* ============================ EVENT WIRING (TODAY) ============================ */
+$('#wkAdd').onclick=async()=>{
+  const day=curDay(); const type=$('#wkType').value; const minutes=parseInt($('#wkMin').value)||0;
+  if(!minutes){ toast('Enter minutes'); return; }
+  day.workouts=day.workouts||[]; day.workouts.push({type,minutes});
+  $('#wkMin').value=''; await Store.saveDay(selectedDate,day);
+};
+$('#omadCheck').onclick=async()=>{ const d=curDay(); d.omad=!d.omad; if(!d.omad)d.omadQuality=false; await Store.saveDay(selectedDate,d); };
+$('#omadQ').onclick=async()=>{ const d=curDay(); d.omadQuality=!d.omadQuality; await Store.saveDay(selectedDate,d); };
+$('#fastCheck').onclick=async()=>{ const d=curDay(); d.fast=!d.fast; await Store.saveDay(selectedDate,d); };
+$('#waterCustom').onclick=async()=>{ const d=curDay(); const v=prompt('Water today in ml:',d.water||0); if(v!==null){ d.water=parseInt(v)||0; await Store.saveDay(selectedDate,d);} };
+
+function bindStat(id,field,parse){ $(id).addEventListener('change',async()=>{ const d=curDay(); d[field]=parse($(id).value); await Store.saveDay(selectedDate,d); }); }
+bindStat('#stSteps','steps',v=>parseInt(v)||0);
+bindStat('#stCal','activeCal',v=>parseInt(v)||0);
+bindStat('#stHr','hr',v=>parseInt(v)||0);
+bindStat('#stSleep','sleep',v=>parseFloat(v)||0);
+let notesTimer; $('#notes').addEventListener('input',()=>{ clearTimeout(notesTimer); notesTimer=setTimeout(async()=>{ const d=curDay(); d.notes=$('#notes').value; await Store.saveDay(selectedDate,d); },600); });
+
+/* ============================ NAV ============================ */
+const views={today:'#v-today',week:'#v-week',compare:'#v-compare',watch:'#v-watch',settings:'#v-settings'};
+$$('nav button').forEach(b=>b.onclick=()=>{
+  $$('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  Object.values(views).forEach(v=>$(v).classList.add('hide'));
+  $(views[b.dataset.v]).classList.remove('hide');
+  window.scrollTo(0,0);
+});
+
+/* ============================ SETTINGS ============================ */
+$('#fbSave').onclick=async()=>{
+  const raw=$('#fbCfg').value.trim(); if(!raw){ toast('Paste your config'); return; }
+  let cfg; try{ cfg = raw.startsWith('{')? JSON.parse(raw.replace(/(\w+):/g,'"$1":').replace(/'/g,'"')) : null; }
+  catch{ cfg=null; }
+  if(!cfg||!cfg.projectId){
+    // try lenient eval of "const firebaseConfig = {...}"
+    try{ const m=raw.match(/\{[\s\S]*\}/); cfg=Function('return ('+m[0]+')')(); }catch{}
+  }
+  if(!cfg||!cfg.projectId){ $('#fbStatus').innerHTML='<span style="color:var(--bad)">Could not read config — paste the {…} object from Firebase.</span>'; return; }
+  localStorage.setItem(LS+':fbcfg', JSON.stringify(cfg));
+  $('#fbStatus').textContent='Connecting…';
+  try{ await Store.initCloud(cfg); $('#fbStatus').innerHTML='<span style="color:var(--good)">✅ Connected — syncing live.</span>'; setSyncBanner(true); renderAll(); }
+  catch(err){ $('#fbStatus').innerHTML='<span style="color:var(--bad)">❌ '+err.message+'</span>'; }
+};
+$('#howto').onclick=()=>showHowto();
+$('#setSave').onclick=()=>{
+  profile.name=$('#setName').value.trim()||profile.name;
+  profile.partner=$('#setPartner').value.trim()||profile.partner;
+  profile.group=$('#setGroup').value.trim()||profile.group;
+  profile.start=$('#setStart').value||profile.start;
+  saveProfile(profile); Store.user=profile.name; Store.partner=profile.partner; Store.group=profile.group;
+  Store.loadLocalCache(); renderAll(); toast('Profile saved');
+};
+$('#exportData').onclick=()=>{
+  Store.loadLocalCache();
+  const data={profile, days:Store.cache[Store.user]||{}};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`fitduo-${Store.user}-${ymd(new Date())}.json`; a.click();
+};
+$('#importData').onclick=()=>$('#importFile').click();
+$('#importFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  try{ const data=JSON.parse(await f.text());
+    if(data.days){ for(const [ds,d] of Object.entries(data.days)) await Store.saveDay(ds,d); }
+    renderAll(); toast('Backup imported'); }
+  catch(err){ toast('Import failed'); }
+});
+$('#resetAll').onclick=()=>{ if(confirm('Delete all FitDuo data on this device? (Cloud data is kept.)')){
+  Object.keys(localStorage).filter(k=>k.startsWith(LS)).forEach(k=>localStorage.removeItem(k));
+  location.reload(); } };
+
+function fillSettings(){
+  $('#setName').value=profile.name||''; $('#setPartner').value=profile.partner||'';
+  $('#setGroup').value=profile.group||''; $('#setStart').value=profile.start||'';
+  const saved=localStorage.getItem(LS+':fbcfg'); if(saved) $('#fbCfg').value=saved;
+}
+
+function setSyncBanner(ok){
+  const b=$('#syncBanner');
+  if(ok){ b.className='banner ok'; b.innerHTML='☁️ Cloud sync active — sharing live with '+(Store.partner||'your partner')+'.'; }
+  else { b.className='banner'; b.innerHTML='⚠️ Local mode — data stays on this device. Add cloud sync in Settings to share with your partner.'; }
+}
+
+/* ============================ HELPERS ============================ */
+let toastT;
+function toast(msg){ let t=$('#toast'); if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t);} t.textContent=msg; t.style.display='block'; clearTimeout(toastT); toastT=setTimeout(()=>t.style.display='none',1600); }
+
+function showHowto(){
+  const m=document.createElement('div'); m.className='modal';
+  m.innerHTML=`<div class="sheet">
+    <h2>Get your free Firebase config</h2>
+    <ol class="small">
+      <li>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> and <b>Add project</b> (any name). Skip Google Analytics.</li>
+      <li>In the project, click the <b>&lt;/&gt; (Web)</b> icon to "Add app". Give it a nickname, click Register.</li>
+      <li>It shows a <code>firebaseConfig = { ... }</code> block. Copy the whole <code>{ ... }</code> and paste it here.</li>
+      <li>Left menu → <b>Build → Authentication → Get started → Anonymous → Enable</b>.</li>
+      <li>Left menu → <b>Build → Firestore Database → Create database</b> (Production mode, any region).</li>
+      <li>Firestore → <b>Rules</b> tab → paste the rules below → Publish:</li>
+    </ol>
+    <pre style="background:var(--card2);padding:10px;border-radius:10px;overflow:auto;font-size:12px">rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    match /groups/{g}/{rest=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre>
+    <p class="small mut">Both you and your partner paste the <b>same</b> config and use the <b>same group code</b>.</p>
+    <button class="btn block" id="closeHowto">Got it</button>
+  </div>`;
+  document.body.appendChild(m);
+  m.onclick=e=>{ if(e.target===m||e.target.id==='closeHowto') m.remove(); };
+}
+
+/* ============================ ONBOARDING ============================ */
+$('#ob-start').value=ymd(new Date());
+$('#ob-go').onclick=()=>{
+  const name=$('#ob-name').value.trim()||'Tawanda';
+  const partner=$('#ob-partner').value.trim()||'Nathan';
+  const group=$('#ob-group').value.trim();
+  if(!group){ toast('Pick a shared group code'); return; }
+  profile={name,partner,group,start:$('#ob-start').value||ymd(new Date())};
+  saveProfile(profile); boot();
+};
+
+/* ============================ BOOT ============================ */
+async function boot(){
+  profile=loadProfile();
+  if(!profile){ $('#onboard').classList.remove('hide'); $('#app').classList.add('hide'); return; }
+  $('#onboard').classList.add('hide'); $('#app').classList.remove('hide');
+  Store.user=profile.name; Store.partner=profile.partner; Store.group=profile.group;
+  Store.onChange(renderAll);
+  fillSettings();
+  const cfgRaw=localStorage.getItem(LS+':fbcfg');
+  if(cfgRaw){ try{ await Store.initCloud(JSON.parse(cfgRaw)); setSyncBanner(true); }
+    catch(err){ console.warn(err); await Store.initLocal(); setSyncBanner(false); } }
+  else { await Store.initLocal(); setSyncBanner(false); }
+  renderAll();
+}
+boot();
+</script>
+</body>
+</html>
