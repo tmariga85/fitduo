@@ -353,6 +353,17 @@ const QUAL_TYPES = ['HIIT','Running','Resistance'];
 const QUAL_MIN = 40;
 const GOALS = { workouts:5, omad:3, fast:2, waterDays:7, water_ml:2000 };
 
+/* Built-in Firebase config — the app auto-connects to cloud sync with this.
+   (A web config is not a secret; Firestore rules protect the data.) */
+const BAKED_CFG = {
+  apiKey: "AIzaSyCzKAogRaVDIXMzYVkdXHReQZpXWlTELNk",
+  authDomain: "fitduo-b3aa6.firebaseapp.com",
+  projectId: "fitduo-b3aa6",
+  storageBucket: "fitduo-b3aa6.firebasestorage.app",
+  messagingSenderId: "941424086948",
+  appId: "1:941424086948:web:16d0342f1cc8d68cfb7b31"
+};
+
 /* ---- date helpers (local, no UTC drift) ---- */
 const pad=n=>String(n).padStart(2,'0');
 function ymd(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -774,7 +785,8 @@ $('#resetAll').onclick=()=>{ if(confirm('Delete all FitDuo data on this device? 
 function fillSettings(){
   $('#setName').value=profile.name||''; $('#setPartner').value=profile.partner||'';
   $('#setGroup').value=profile.group||''; $('#setStart').value=profile.start||'';
-  const saved=localStorage.getItem(LS+':fbcfg'); if(saved) $('#fbCfg').value=saved;
+  const saved=localStorage.getItem(LS+':fbcfg');
+  $('#fbCfg').value = saved || (BAKED_CFG && BAKED_CFG.projectId ? JSON.stringify(BAKED_CFG,null,2) : '');
 }
 
 function setSyncBanner(ok){
@@ -833,8 +845,9 @@ async function boot(){
   Store.user=profile.name; Store.partner=profile.partner; Store.group=profile.group;
   Store.onChange(renderAll);
   fillSettings();
-  const cfgRaw=localStorage.getItem(LS+':fbcfg');
-  if(cfgRaw){ try{ await Store.initCloud(JSON.parse(cfgRaw)); setSyncBanner(true); }
+  const saved=localStorage.getItem(LS+':fbcfg');
+  const cfg = saved ? JSON.parse(saved) : (BAKED_CFG && BAKED_CFG.projectId ? BAKED_CFG : null);
+  if(cfg){ try{ await Store.initCloud(cfg); setSyncBanner(true); }
     catch(err){ console.warn(err); await Store.initLocal(); setSyncBanner(false); } }
   else { await Store.initLocal(); setSyncBanner(false); }
   renderAll();
