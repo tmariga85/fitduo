@@ -325,6 +325,46 @@
       </div>
     </section>
 
+    <!-- TRENDS -->
+    <section id="v-trends" class="hide">
+      <div class="card">
+        <h2>🎯 Targets</h2>
+        <div class="grid">
+          <label class="field" style="margin:0"><span class="lab">Target weight (kg)</span>
+            <input id="tgtWeight" type="number" inputmode="decimal" placeholder="e.g. 72"/></label>
+          <label class="field" style="margin:0"><span class="lab">Target BP (sys / dia)</span>
+            <div class="row" style="gap:6px">
+              <input id="tgtBpSys" type="number" inputmode="numeric" placeholder="120"/>
+              <span class="mut">/</span>
+              <input id="tgtBpDia" type="number" inputmode="numeric" placeholder="80"/>
+            </div></label>
+        </div>
+        <div id="tgtSummary" class="small" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <h2>⚖️ Weight <span class="pill" id="wTrendPill"></span></h2>
+        <div id="chartWeight"></div>
+        <div id="weightSummary" class="row" style="margin-top:8px;gap:14px;flex-wrap:wrap;font-size:13px"></div>
+      </div>
+
+      <div class="card">
+        <h2>📊 BMI</h2>
+        <div id="chartBmi"></div>
+        <div id="bmiSummary" class="row between small" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <h2>❤️ Blood pressure</h2>
+        <div id="chartBp"></div>
+        <div class="row small" style="margin-top:8px;gap:14px;flex-wrap:wrap">
+          <span><span style="color:var(--bad)">●</span> systolic</span>
+          <span><span style="color:var(--warn)">●</span> diastolic</span>
+          <span class="mut" id="bpSummary"></span>
+        </div>
+      </div>
+    </section>
+
     <!-- SETTINGS -->
     <section id="v-settings" class="hide">
       <div class="card">
@@ -360,6 +400,7 @@
   <nav>
     <button data-v="today" class="on"><span class="ic">📅</span>Today</button>
     <button data-v="week"><span class="ic">📊</span>Week</button>
+    <button data-v="trends"><span class="ic">📈</span>Trends</button>
     <button data-v="compare"><span class="ic">🤝</span>Compare</button>
     <button data-v="watch"><span class="ic">⌚</span>Watch</button>
     <button data-v="settings"><span class="ic">⚙️</span>Settings</button>
@@ -557,12 +598,13 @@ function renderStats(){
 }
 
 /* ============================ RENDER: BODY METRICS ============================ */
-function mostRecentHeight(){ // carry forward last entered height on/before selectedDate
+function heightOnOrBefore(onDate){ // carry forward last entered height on/before a date
   const cache=Store.cache[Store.user]||{}; let best=0,bestDate='';
   for(const [ds,d] of Object.entries(cache)){
-    if(ds<=selectedDate && d.height && ds>bestDate){ best=d.height; bestDate=ds; } }
+    if(ds<=onDate && d.height && ds>bestDate){ best=d.height; bestDate=ds; } }
   return best;
 }
+function mostRecentHeight(){ return heightOnOrBefore(selectedDate); }
 function bmiCategory(b){
   if(b<18.5) return ['Underweight','res'];
   if(b<25)   return ['Healthy','q'];
@@ -692,12 +734,93 @@ function renderWatch(){
   $('#watchTable').innerHTML=rows||'<span class="mut">No watch data yet. Enter it on Today, or import below.</span>';
 }
 
+/* ============================ RENDER: TRENDS ============================ */
+function seriesFor(metric){ // returns sorted [{t,v}] of days that have this metric
+  const cache=Store.cache[Store.user]||{}; const pts=[];
+  for(const [ds,d] of Object.entries(cache)){
+    let v=0;
+    if(metric==='weight') v=+d.weight||0;
+    else if(metric==='bmi'){ const h=(+d.height)||heightOnOrBefore(ds);
+      if((+d.weight||0)>0 && h>0) v=d.weight/Math.pow(h/100,2); }
+    else v=+d[metric]||0;
+    if(v>0) pts.push({t:parseYmd(ds).getTime(), v:+v});
+  }
+  pts.sort((a,b)=>a.t-b.t);
+  return pts;
+}
+/* inline SVG line chart — no external libs. series:[{pts,color}], opts:{targets,decimals} */
+function buildLineChart(series, opts={}){
+  const W=340,H=140,padL=32,padR=10,padT=10,padB=20;
+  const dec=opts.decimals??1;
+  const vals=[]; series.forEach(s=>s.pts.forEach(p=>vals.push(p.v)));
+  (opts.targets||[]).forEach(t=>vals.push(t.v));
+  if(!vals.length) return '<div class="mut small">No data yet — log a few days and your trend line appears here.</div>';
+  let min=Math.min(...vals), max=Math.max(...vals);
+  if(min===max){ min-=1; max+=1; }
+  const gap=(max-min)*0.14; min-=gap; max+=gap;
+  const times=[]; series.forEach(s=>s.pts.forEach(p=>times.push(p.t)));
+  const tmin=Math.min(...times), tmax=Math.max(...times);
+  const x=t=> tmax===tmin ? padL+(W-padL-padR)/2 : padL+((t-tmin)/(tmax-tmin))*(W-padL-padR);
+  const y=v=> padT+(1-(v-min)/(max-min))*(H-padT-padB);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">`;
+  [max,(min+max)/2,min].forEach(gv=>{ const gy=y(gv).toFixed(1);
+    svg+=`<line x1="${padL}" y1="${gy}" x2="${W-padR}" y2="${gy}" stroke="var(--line)" stroke-width="1"/>`;
+    svg+=`<text x="2" y="${(+gy+3).toFixed(1)}" fill="var(--mut)" font-size="9">${gv.toFixed(dec)}</text>`; });
+  (opts.targets||[]).forEach(t=>{ const ty=y(t.v).toFixed(1);
+    svg+=`<line x1="${padL}" y1="${ty}" x2="${W-padR}" y2="${ty}" stroke="${t.color}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+    svg+=`<text x="${W-padR}" y="${(+ty-3).toFixed(1)}" fill="${t.color}" font-size="9" text-anchor="end">${t.label}</text>`; });
+  series.forEach(s=>{ if(!s.pts.length) return;
+    const dpath=s.pts.map((p,i)=>`${i?'L':'M'}${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`).join(' ');
+    svg+=`<path d="${dpath}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+    s.pts.forEach(p=>{ svg+=`<circle cx="${x(p.t).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.4" fill="${s.color}"/>`; });
+  });
+  const fmt=t=>{const d=new Date(t);return `${d.getDate()}/${d.getMonth()+1}`;};
+  svg+=`<text x="${padL}" y="${H-6}" fill="var(--mut)" font-size="9">${fmt(tmin)}</text>`;
+  svg+=`<text x="${W-padR}" y="${H-6}" fill="var(--mut)" font-size="9" text-anchor="end">${fmt(tmax)}</text>`;
+  return svg+'</svg>';
+}
+function renderTrends(){
+  const wPts=seriesFor('weight'), bmiPts=seriesFor('bmi'),
+        sysPts=seriesFor('bpSys'), diaPts=seriesFor('bpDia');
+  const tw=+profile.targetWeight||0, tsys=+profile.targetBpSys||0, tdia=+profile.targetBpDia||0;
+
+  $('#chartWeight').innerHTML=buildLineChart([{pts:wPts,color:'var(--accent2)'}],
+    {targets: tw?[{v:tw,color:'var(--accent)',label:'🎯 '+tw}]:[], decimals:1});
+  $('#wTrendPill').textContent = wPts.length? wPts.length+(wPts.length>1?' entries':' entry') : '';
+  if(wPts.length){ const s=wPts[0].v, n=wPts[wPts.length-1].v, ch=n-s;
+    $('#weightSummary').innerHTML=
+      `<span>Start <b>${s.toFixed(1)}</b> kg</span>`+
+      `<span>Now <b>${n.toFixed(1)}</b> kg</span>`+
+      `<span class="${ch<=0?'lead':'behind'}">${ch>=0?'+':''}${ch.toFixed(1)} kg</span>`+
+      (tw?`<span class="mut">${n-tw>0?(n-tw).toFixed(1)+' kg to target':(n-tw<0?'below target':'target hit ✓')}</span>`:'');
+  } else $('#weightSummary').innerHTML='<span class="mut">Log your weight to see the trend.</span>';
+
+  $('#chartBmi').innerHTML=buildLineChart([{pts:bmiPts,color:'var(--accent)'}],{decimals:1});
+  if(bmiPts.length){ const n=bmiPts[bmiPts.length-1].v, s=bmiPts[0].v, ch=n-s; const [cat]=bmiCategory(n);
+    $('#bmiSummary').innerHTML=`<span>Start <b>${s.toFixed(1)}</b> · Now <b>${n.toFixed(1)}</b> <span class="${ch<=0?'lead':'behind'}">(${ch>=0?'+':''}${ch.toFixed(1)})</span></span><span class="mut">${cat}</span>`;
+  } else $('#bmiSummary').innerHTML='<span class="mut">Log weight + height to see BMI.</span>';
+
+  $('#chartBp').innerHTML=buildLineChart(
+    [{pts:sysPts,color:'var(--bad)'},{pts:diaPts,color:'var(--warn)'}],
+    {targets:[...(tsys?[{v:tsys,color:'var(--bad)',label:'🎯'+tsys}]:[]),
+              ...(tdia?[{v:tdia,color:'var(--warn)',label:'🎯'+tdia}]:[])], decimals:0});
+  if(sysPts.length){ const s=sysPts[sysPts.length-1].v, d=diaPts.length?diaPts[diaPts.length-1].v:0;
+    const [bcat]=bpCategory(s,d); $('#bpSummary').textContent=`latest ${s}/${d} · ${bcat}`;
+  } else $('#bpSummary').textContent='log BP to see the trend';
+
+  const parts=[];
+  if(tw) parts.push(`Weight target: <b>${tw} kg</b>`);
+  if(tsys&&tdia) parts.push(`BP target: <b>≤ ${tsys}/${tdia}</b>`);
+  $('#tgtSummary').innerHTML = parts.length? parts.join(' &nbsp;·&nbsp; ')
+    : '<span class="mut">Set a target weight and BP — they show as goal lines on the charts below.</span>';
+}
+
 /* ============================ MASTER RENDER ============================ */
 function renderAll(){
   if(!profile) return;
   $('#who').innerHTML=`<b>${Store.user}</b><br>group: ${Store.group}`;
   renderWeekStrip(); renderWater(); renderWorkouts(); renderEating(); renderStats(); renderMetrics();
-  renderWeek(); renderCompare(); renderWatch();
+  renderWeek(); renderTrends(); renderCompare(); renderWatch();
 }
 
 /* ============================ SAMSUNG CSV IMPORT ============================ */
@@ -797,10 +920,17 @@ bindStat('#mHeight','height',v=>parseFloat(v)||0);
 bindStat('#mBpSys','bpSys',v=>parseInt(v)||0);
 bindStat('#mBpDia','bpDia',v=>parseInt(v)||0);
 ['#mWeight','#mHeight','#mBpSys','#mBpDia'].forEach(id=>$(id).addEventListener('input',updateMetricsDisplay));
+
+/* target goals (stored on profile, per person) */
+function fillTargets(){ $('#tgtWeight').value=profile.targetWeight||''; $('#tgtBpSys').value=profile.targetBpSys||''; $('#tgtBpDia').value=profile.targetBpDia||''; }
+function bindTarget(id,field,parse){ $(id).addEventListener('input',()=>{ profile[field]=parse($(id).value); saveProfile(profile); renderTrends(); }); }
+bindTarget('#tgtWeight','targetWeight',v=>parseFloat(v)||0);
+bindTarget('#tgtBpSys','targetBpSys',v=>parseInt(v)||0);
+bindTarget('#tgtBpDia','targetBpDia',v=>parseInt(v)||0);
 let notesTimer; $('#notes').addEventListener('input',()=>{ clearTimeout(notesTimer); notesTimer=setTimeout(async()=>{ const d=curDay(); d.notes=$('#notes').value; await Store.saveDay(selectedDate,d); },600); });
 
 /* ============================ NAV ============================ */
-const views={today:'#v-today',week:'#v-week',compare:'#v-compare',watch:'#v-watch',settings:'#v-settings'};
+const views={today:'#v-today',week:'#v-week',trends:'#v-trends',compare:'#v-compare',watch:'#v-watch',settings:'#v-settings'};
 $$('nav button').forEach(b=>b.onclick=()=>{
   $$('nav button').forEach(x=>x.classList.toggle('on',x===b));
   Object.values(views).forEach(v=>$(v).classList.add('hide'));
@@ -913,7 +1043,7 @@ async function boot(){
   $('#onboard').classList.add('hide'); $('#app').classList.remove('hide');
   Store.user=profile.name; Store.partner=profile.partner; Store.group=profile.group;
   Store.onChange(renderAll);
-  fillSettings();
+  fillSettings(); fillTargets();
   const saved=localStorage.getItem(LS+':fbcfg');
   const cfg = saved ? JSON.parse(saved) : (BAKED_CFG && BAKED_CFG.projectId ? BAKED_CFG : null);
   if(cfg){ try{ await Store.initCloud(cfg); setSyncBanner(true); }
