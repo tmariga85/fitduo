@@ -232,6 +232,27 @@
       </div>
 
       <div class="card">
+        <h2>⚖️ Body metrics</h2>
+        <div class="grid">
+          <label class="field" style="margin:0"><span class="lab">Weight (kg)</span>
+            <input id="mWeight" type="number" inputmode="decimal" placeholder="e.g. 78.5"/></label>
+          <label class="field" style="margin:0"><span class="lab">Height (cm)</span>
+            <input id="mHeight" type="number" inputmode="numeric" placeholder="e.g. 178"/></label>
+          <label class="field" style="margin:0"><span class="lab">BP — systolic (upper)</span>
+            <input id="mBpSys" type="number" inputmode="numeric" placeholder="e.g. 120"/></label>
+          <label class="field" style="margin:0"><span class="lab">BP — diastolic (lower)</span>
+            <input id="mBpDia" type="number" inputmode="numeric" placeholder="e.g. 80"/></label>
+        </div>
+        <div class="row between" style="margin-top:14px;align-items:flex-end">
+          <div><div class="mut tiny">BMI</div><div id="bmiVal" style="font-size:24px;font-weight:800">–</div></div>
+          <div id="bmiCat" class="tag other">enter weight + height</div>
+          <div style="text-align:right"><div class="mut tiny">Blood pressure</div>
+            <div id="bpVal" style="font-size:20px;font-weight:800">–</div><div id="bpCat" class="tiny mut"></div></div>
+        </div>
+        <p class="tiny mut" style="margin:8px 0 0">Height carries over from your last entry, so you only type it when it changes. BMI updates automatically.</p>
+      </div>
+
+      <div class="card">
         <h2>📝 Notes</h2>
         <textarea id="notes" placeholder="How did today feel? Energy, soreness, wins…"></textarea>
       </div>
@@ -453,7 +474,8 @@ const Store = {
 
 function blankDay(){
   return { water:0, workouts:[], omad:false, omadQuality:false, fast:false,
-           steps:0, activeCal:0, hr:0, sleep:0, notes:'' };
+           steps:0, activeCal:0, hr:0, sleep:0,
+           weight:0, height:0, bpSys:0, bpDia:0, notes:'' };
 }
 /* current editable copy for selectedDate */
 function curDay(){ return Store.getDay(Store.user, selectedDate); }
@@ -532,6 +554,48 @@ function renderStats(){
   $('#stSteps').value=day.steps||''; $('#stCal').value=day.activeCal||'';
   $('#stHr').value=day.hr||''; $('#stSleep').value=day.sleep||'';
   $('#notes').value=day.notes||'';
+}
+
+/* ============================ RENDER: BODY METRICS ============================ */
+function mostRecentHeight(){ // carry forward last entered height on/before selectedDate
+  const cache=Store.cache[Store.user]||{}; let best=0,bestDate='';
+  for(const [ds,d] of Object.entries(cache)){
+    if(ds<=selectedDate && d.height && ds>bestDate){ best=d.height; bestDate=ds; } }
+  return best;
+}
+function bmiCategory(b){
+  if(b<18.5) return ['Underweight','res'];
+  if(b<25)   return ['Healthy','q'];
+  if(b<30)   return ['Overweight','res'];
+  return ['Obese','hiit'];
+}
+function bpCategory(s,d){ // ACC/AHA-style buckets, informational only
+  if(!s||!d) return ['',''];
+  if(s>=180||d>=120) return ['Hypertensive crisis','bad'];
+  if(s>=140||d>=90)  return ['High (stage 2)','bad'];
+  if(s>=130||d>=80)  return ['High (stage 1)','warn'];
+  if(s>=120)         return ['Elevated','warn'];
+  return ['Normal','good'];
+}
+function updateMetricsDisplay(){
+  const w=parseFloat($('#mWeight').value)||0;
+  const h=parseFloat($('#mHeight').value)||mostRecentHeight()||0;
+  if(w>0&&h>0){ const bmi=w/Math.pow(h/100,2);
+    $('#bmiVal').textContent=bmi.toFixed(1);
+    const [cat,cls]=bmiCategory(bmi); const el=$('#bmiCat'); el.textContent=cat; el.className='tag '+cls;
+  } else { $('#bmiVal').textContent='–'; const el=$('#bmiCat'); el.textContent='enter weight + height'; el.className='tag other'; }
+  const s=parseInt($('#mBpSys').value)||0, d=parseInt($('#mBpDia').value)||0;
+  $('#bpVal').textContent=(s&&d)?`${s}/${d}`:'–';
+  const [bcat,bcls]=bpCategory(s,d); const be=$('#bpCat');
+  be.textContent=bcat; be.style.color=bcls?`var(--${bcls})`:'var(--mut)';
+}
+function renderMetrics(){
+  const day=curDay();
+  $('#mWeight').value=day.weight||'';
+  $('#mHeight').value=day.height||mostRecentHeight()||'';
+  $('#mBpSys').value=day.bpSys||'';
+  $('#mBpDia').value=day.bpDia||'';
+  updateMetricsDisplay();
 }
 
 /* ============================ RENDER: WEEK ============================ */
@@ -632,7 +696,7 @@ function renderWatch(){
 function renderAll(){
   if(!profile) return;
   $('#who').innerHTML=`<b>${Store.user}</b><br>group: ${Store.group}`;
-  renderWeekStrip(); renderWater(); renderWorkouts(); renderEating(); renderStats();
+  renderWeekStrip(); renderWater(); renderWorkouts(); renderEating(); renderStats(); renderMetrics();
   renderWeek(); renderCompare(); renderWatch();
 }
 
@@ -728,6 +792,11 @@ bindStat('#stSteps','steps',v=>parseInt(v)||0);
 bindStat('#stCal','activeCal',v=>parseInt(v)||0);
 bindStat('#stHr','hr',v=>parseInt(v)||0);
 bindStat('#stSleep','sleep',v=>parseFloat(v)||0);
+bindStat('#mWeight','weight',v=>parseFloat(v)||0);
+bindStat('#mHeight','height',v=>parseFloat(v)||0);
+bindStat('#mBpSys','bpSys',v=>parseInt(v)||0);
+bindStat('#mBpDia','bpDia',v=>parseInt(v)||0);
+['#mWeight','#mHeight','#mBpSys','#mBpDia'].forEach(id=>$(id).addEventListener('input',updateMetricsDisplay));
 let notesTimer; $('#notes').addEventListener('input',()=>{ clearTimeout(notesTimer); notesTimer=setTimeout(async()=>{ const d=curDay(); d.notes=$('#notes').value; await Store.saveDay(selectedDate,d); },600); });
 
 /* ============================ NAV ============================ */
