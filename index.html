@@ -327,6 +327,14 @@
 
     <!-- TRENDS -->
     <section id="v-trends" class="hide">
+      <div class="row between" style="margin:2px 2px 0">
+        <span class="small mut">Chart range</span>
+        <div class="row" id="rangeSel" style="gap:6px">
+          <button class="btn sec sm" data-range="30">30d</button>
+          <button class="btn sec sm" data-range="90">90d</button>
+          <button class="btn sec sm" data-range="0">All</button>
+        </div>
+      </div>
       <div class="card">
         <h2>🎯 Targets</h2>
         <div class="grid">
@@ -442,12 +450,13 @@ function loadProfile(){ try{return JSON.parse(localStorage.getItem(LS+':profile'
 function saveProfile(p){ localStorage.setItem(LS+':profile', JSON.stringify(p)); }
 let profile = loadProfile();
 let selectedDate = ymd(new Date());
+let trendRange = 90; // days shown on Trends charts; 0 = all time
 
 /* ============================ DATA STORE ============================ */
 /* Abstraction over local (offline) and Firebase (cloud). cache[user][date] = dayData */
 const Store = {
   mode:'local', group:null, user:null, partner:null,
-  cache:{}, listeners:[], db:null, ready:false,
+  cache:{}, targets:{}, listeners:[], db:null, ready:false,
 
   onChange(cb){ this.listeners.push(cb); },
   emit(){ this.listeners.forEach(cb=>cb()); },
@@ -474,6 +483,20 @@ const Store = {
     this.emit();
   },
 
+  async saveTargets(patch){
+    this.targets={...this.targets,...patch};
+    if(this.mode==='cloud' && this.db){
+      const {doc,setDoc}=this.fs;
+      await setDoc(doc(this.db,'groups',this.group,'members',this.user,'meta','targets'), this.targets);
+    } else {
+      localStorage.setItem(`${LS}:targets:${this.group}:${this.user}`, JSON.stringify(this.targets));
+    }
+    this.emit();
+  },
+  loadLocalTargets(){
+    try{ const v=JSON.parse(localStorage.getItem(`${LS}:targets:${this.group}:${this.user}`)); if(v) this.targets=v; }catch{}
+  },
+
   /* load all local days for current user into cache (for week/compare views) */
   loadLocalCache(){
     this.cache[this.user]=this.cache[this.user]||{};
@@ -485,7 +508,7 @@ const Store = {
     }
   },
 
-  async initLocal(){ this.mode='local'; this.loadLocalCache(); this.ready=true; this.emit(); },
+  async initLocal(){ this.mode='local'; this.loadLocalCache(); this.loadLocalTargets(); this.ready=true; this.emit(); },
 
   async initCloud(cfg){
     const appMod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
@@ -509,6 +532,11 @@ const Store = {
         this.emit();
       }, err=>{ console.warn('snapshot error',err); });
     });
+    // sync this user's targets (single doc), with local as offline fallback
+    this.loadLocalTargets();
+    fsMod.onSnapshot(fsMod.doc(this.db,'groups',this.group,'members',this.user,'meta','targets'),
+      snap=>{ if(snap.exists()){ this.targets=snap.data(); this.emit(); } },
+      err=>{ console.warn('targets snapshot error',err); });
     this.ready=true; this.emit();
   }
 };
@@ -737,7 +765,9 @@ function renderWatch(){
 /* ============================ RENDER: TRENDS ============================ */
 function seriesFor(metric){ // returns sorted [{t,v}] of days that have this metric
   const cache=Store.cache[Store.user]||{}; const pts=[];
+  const cutoff = trendRange>0 ? Date.now()-trendRange*86400000 : 0;
   for(const [ds,d] of Object.entries(cache)){
+    if(parseYmd(ds).getTime()<cutoff) continue;
     let v=0;
     if(metric==='weight') v=+d.weight||0;
     else if(metric==='bmi'){ const h=(+d.height)||heightOnOrBefore(ds);
@@ -780,9 +810,10 @@ function buildLineChart(series, opts={}){
   return svg+'</svg>';
 }
 function renderTrends(){
+  fillTargets(); // keep inputs in sync with cloud-synced targets (focus-safe)
   const wPts=seriesFor('weight'), bmiPts=seriesFor('bmi'),
         sysPts=seriesFor('bpSys'), diaPts=seriesFor('bpDia');
-  const tw=+profile.targetWeight||0, tsys=+profile.targetBpSys||0, tdia=+profile.targetBpDia||0;
+  const tw=+Store.targets.targetWeight||0, tsys=+Store.targets.targetBpSys||0, tdia=+Store.targets.targetBpDia||0;
 
   $('#chartWeight').innerHTML=buildLineChart([{pts:wPts,color:'var(--accent2)'}],
     {targets: tw?[{v:tw,color:'var(--accent)',label:'🎯 '+tw}]:[], decimals:1});
@@ -921,12 +952,18 @@ bindStat('#mBpSys','bpSys',v=>parseInt(v)||0);
 bindStat('#mBpDia','bpDia',v=>parseInt(v)||0);
 ['#mWeight','#mHeight','#mBpSys','#mBpDia'].forEach(id=>$(id).addEventListener('input',updateMetricsDisplay));
 
-/* target goals (stored on profile, per person) */
-function fillTargets(){ $('#tgtWeight').value=profile.targetWeight||''; $('#tgtBpSys').value=profile.targetBpSys||''; $('#tgtBpDia').value=profile.targetBpDia||''; }
-function bindTarget(id,field,parse){ $(id).addEventListener('input',()=>{ profile[field]=parse($(id).value); saveProfile(profile); renderTrends(); }); }
+/* target goals — synced per person via Store.targets (cloud + local fallback) */
+function fillTargets(){ [['#tgtWeight','targetWeight'],['#tgtBpSys','targetBpSys'],['#tgtBpDia','targetBpDia']]
+  .forEach(([id,f])=>{ const el=$(id); if(el && document.activeElement!==el) el.value=Store.targets[f]||''; }); }
+function bindTarget(id,field,parse){ $(id).addEventListener('change',()=>{ Store.saveTargets({[field]:parse($(id).value)}); }); }
 bindTarget('#tgtWeight','targetWeight',v=>parseFloat(v)||0);
 bindTarget('#tgtBpSys','targetBpSys',v=>parseInt(v)||0);
 bindTarget('#tgtBpDia','targetBpDia',v=>parseInt(v)||0);
+
+/* Trends date-range selector */
+function updateRangeActive(){ $$('#rangeSel button').forEach(b=>{ const on=+b.dataset.range===trendRange;
+  b.style.background=on?'var(--accent)':''; b.style.color=on?'#06210f':''; b.style.borderColor=on?'var(--accent)':''; }); }
+$$('#rangeSel button').forEach(b=>b.onclick=()=>{ trendRange=+b.dataset.range; updateRangeActive(); renderTrends(); });
 let notesTimer; $('#notes').addEventListener('input',()=>{ clearTimeout(notesTimer); notesTimer=setTimeout(async()=>{ const d=curDay(); d.notes=$('#notes').value; await Store.saveDay(selectedDate,d); },600); });
 
 /* ============================ NAV ============================ */
@@ -1043,12 +1080,19 @@ async function boot(){
   $('#onboard').classList.add('hide'); $('#app').classList.remove('hide');
   Store.user=profile.name; Store.partner=profile.partner; Store.group=profile.group;
   Store.onChange(renderAll);
-  fillSettings(); fillTargets();
+  fillSettings();
   const saved=localStorage.getItem(LS+':fbcfg');
   const cfg = saved ? JSON.parse(saved) : (BAKED_CFG && BAKED_CFG.projectId ? BAKED_CFG : null);
   if(cfg){ try{ await Store.initCloud(cfg); setSyncBanner(true); }
     catch(err){ console.warn(err); await Store.initLocal(); setSyncBanner(false); } }
   else { await Store.initLocal(); setSyncBanner(false); }
+  // migrate any earlier device-local targets (stored on profile) into synced Store.targets
+  if((profile.targetWeight||profile.targetBpSys||profile.targetBpDia) &&
+     !(Store.targets.targetWeight||Store.targets.targetBpSys||Store.targets.targetBpDia)){
+    await Store.saveTargets({targetWeight:+profile.targetWeight||0,targetBpSys:+profile.targetBpSys||0,targetBpDia:+profile.targetBpDia||0});
+    delete profile.targetWeight; delete profile.targetBpSys; delete profile.targetBpDia; saveProfile(profile);
+  }
+  updateRangeActive();
   renderAll();
 }
 boot();
